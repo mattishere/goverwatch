@@ -77,6 +77,8 @@ type Stats struct {
 }
 ```
 
+When using `goverwatch.Stats()`, there is a chance that the profile does not exist. In such a case an error with the message `"profile not found"` will be returned.
+
 Furthermore, you can access some of the submodules the package has to offer:
 - **`github.com/mattishere/goverwatch/url`** exposes constants such as a role map (icon: role), role icons and the base URL. You can also find the `GenerateURL()` helper function that lets you easily generate a new URL for a player's name and tag.
 - **`github.com/mattishere/goverwatch/data`** exposes all of the data structures used in the library.

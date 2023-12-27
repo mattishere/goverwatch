@@ -1,6 +1,7 @@
 package goverwatch
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/gocolly/colly"
@@ -12,6 +13,18 @@ import (
 // Returns a Stats struct containing the profile and ranks of the player
 func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 	c := colly.NewCollector()
+
+	profileExists := true
+	c.OnHTML("h2[slot=heading]", func(e *colly.HTMLElement) {
+		if e.Text == "Profile Not Found" {
+			profileExists = false
+			return
+		}
+	})
+
+	if !profileExists {
+		return stats, fmt.Errorf("profile not found")
+	}
 
 	stats.Profile.Name = name
 	stats.Profile.Tag = discriminator
