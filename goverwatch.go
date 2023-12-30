@@ -1,7 +1,6 @@
 package goverwatch
 
 import (
-	"fmt"
 	"path"
 
 	"github.com/gocolly/colly"
@@ -14,61 +13,62 @@ import (
 func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 	c := colly.NewCollector()
 
-	profileExists := true
-	c.OnHTML("h2[slot=heading]", func(e *colly.HTMLElement) {
-		if e.Text == "Profile Not Found" {
-			profileExists = false
-			return
-		}
-	})
-
-	if !profileExists {
-		return stats, fmt.Errorf("profile not found")
-	}
-
 	stats.Profile.Name = name
 	stats.Profile.Tag = discriminator
 
 	// Profile data (should be moved to the profile package eventually!)
 	c.OnHTML(".Profile-player--portrait", func(e *colly.HTMLElement) {
-		stats.Profile.ProfilePicture = e.Attr("src")
-	})
-	c.OnHTML(".Profile-player--title", func(e *colly.HTMLElement) {
-		stats.Profile.Title = e.Text
-	})
-	c.OnHTML(".Profile-playerSummary--endorsement", func(e *colly.HTMLElement) {
-		stats.Profile.EndorsementIcon = e.Attr("src")
-	})
-
-	// Ranks (should be moved to the ranks package eventually!)
-	var roles []string
-	c.OnHTML(".Profile-playerSummary--role img", func(e *colly.HTMLElement) {
-		src := e.Attr("src")
-		roles = append(roles, url.RoleURLS[src])
-	})
-
-	var i int
-	c.OnHTML(".Profile-playerSummary--rank", func(e *colly.HTMLElement) {
-		role := roles[i]
-		imgPath := path.Base(e.Attr("src"))
-
-		rank, roleError := ranks.GetRoleRank(imgPath)
-		if roleError != nil {
-			err = roleError
-			return
+		if e.Attr("src") != "" {
+			stats.Profile.ProfilePicture = e.Attr("src")
+			stats.Profile.Exists = true
 		}
-
-		switch role {
-		case "tank":
-			stats.Ranks.Tank = rank
-		case "dps":
-			stats.Ranks.DPS = rank
-		case "support":
-			stats.Ranks.Support = rank
-		}
-
-		i++
 	})
+
+	if !stats.Profile.Exists {
+		// Is the profile private
+		c.OnHTML(".Profile-private---msg", func(e *colly.HTMLElement) {
+			stats.Profile.Private = true
+		})
+
+		c.OnHTML(".Profile-player--title", func(e *colly.HTMLElement) {
+			stats.Profile.Title = e.Text
+		})
+		c.OnHTML(".Profile-playerSummary--endorsement", func(e *colly.HTMLElement) {
+			stats.Profile.EndorsementIcon = e.Attr("src")
+		})
+
+		// Ranks (should be moved to the ranks package eventually!)
+		if !stats.Profile.Private {
+			var roles []string
+			c.OnHTML(".Profile-playerSummary--role img", func(e *colly.HTMLElement) {
+				src := e.Attr("src")
+				roles = append(roles, url.RoleURLS[src])
+			})
+
+			var i int
+			c.OnHTML(".Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+				role := roles[i]
+				imgPath := path.Base(e.Attr("src"))
+
+				rank, roleError := ranks.GetRoleRank(imgPath)
+				if roleError != nil {
+					err = roleError
+					return
+				}
+
+				switch role {
+				case "tank":
+					stats.Ranks.Tank = rank
+				case "dps":
+					stats.Ranks.DPS = rank
+				case "support":
+					stats.Ranks.Support = rank
+				}
+
+				i++
+			})
+		}
+	}
 
 	c.Visit(url.GenerateURL(name, discriminator))
 	return stats, err

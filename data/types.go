@@ -10,6 +10,8 @@ type Stats struct {
 type Profile struct {
 	Name            string
 	Tag             int
+	Private         bool
+	Exists          bool
 	ProfilePicture  string
 	Title           string
 	EndorsementIcon string
