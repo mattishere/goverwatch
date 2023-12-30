@@ -60,7 +60,7 @@ type Stats struct {
 	Profile (
 		Name            string
 		Tag             int
-		Private			bool 
+		IsPrivate		bool 
 		Exists 			bool // If the account is not found
 		ProfilePicture  string
 		Title           string

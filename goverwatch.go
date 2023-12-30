@@ -27,7 +27,7 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 	if !stats.Profile.Exists {
 		// Is the profile private
 		c.OnHTML(".Profile-private---msg", func(e *colly.HTMLElement) {
-			stats.Profile.Private = true
+			stats.Profile.IsPrivate = true
 		})
 
 		c.OnHTML(".Profile-player--title", func(e *colly.HTMLElement) {
@@ -38,7 +38,7 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 		})
 
 		// Ranks (should be moved to the ranks package eventually!)
-		if !stats.Profile.Private {
+		if !stats.Profile.IsPrivate {
 			var roles []string
 			c.OnHTML(".Profile-playerSummary--role img", func(e *colly.HTMLElement) {
 				src := e.Attr("src")
