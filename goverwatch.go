@@ -13,8 +13,11 @@ import (
 func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 	c := colly.NewCollector()
 
+	link := url.GenerateURL(name, discriminator)
+
 	stats.Profile.Name = name
 	stats.Profile.Tag = discriminator
+	stats.Profile.URL = link
 
 	// Profile data (should be moved to the profile package eventually!)
 	c.OnHTML(".Profile-player--portrait", func(e *colly.HTMLElement) {
@@ -70,6 +73,6 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 		}
 	}
 
-	c.Visit(url.GenerateURL(name, discriminator))
+	c.Visit(link)
 	return stats, err
 }
