@@ -49,27 +49,29 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 			})
 
 			var i int
-			c.OnHTML(".Profile-playerSummary--rank", func(e *colly.HTMLElement) {
-				role := roles[i]
-				imgPath := path.Base(e.Attr("src"))
+			if len(roles) > 0 {
+				c.OnHTML(".Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+					role := roles[i]
+					imgPath := path.Base(e.Attr("src"))
 
-				rank, roleError := ranks.GetRoleRank(imgPath)
-				if roleError != nil {
-					err = roleError
-					return
-				}
+					rank, roleError := ranks.GetRoleRank(imgPath)
+					if roleError != nil {
+						err = roleError
+						return
+					}
 
-				switch role {
-				case "tank":
-					stats.Ranks.Tank = rank
-				case "dps":
-					stats.Ranks.DPS = rank
-				case "support":
-					stats.Ranks.Support = rank
-				}
+					switch role {
+					case "tank":
+						stats.Ranks.Tank = rank
+					case "dps":
+						stats.Ranks.DPS = rank
+					case "support":
+						stats.Ranks.Support = rank
+					}
 
-				i++
-			})
+					i++
+				})
+			}
 		}
 	}
 
