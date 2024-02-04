@@ -3,7 +3,8 @@ package data
 // Stats contains the profile and ranks of the player
 type Stats struct {
 	Profile Profile
-	Ranks   Ranks
+	PC      Platform
+	Console Platform
 }
 
 // Profile contains the profile data of the player
@@ -16,6 +17,11 @@ type Profile struct {
 	Title           string
 	EndorsementIcon string
 	URL             string
+}
+
+type Platform struct {
+	HasRanks bool
+	Ranks    Ranks
 }
 
 // Ranks contains the ranks of the player

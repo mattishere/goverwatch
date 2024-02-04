@@ -42,18 +42,19 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 
 		// Ranks (should be moved to the ranks package eventually!)
 		if !stats.Profile.IsPrivate {
-			var roles []string
-			c.OnHTML(".Profile-playerSummary--role img", func(e *colly.HTMLElement) {
+			var pcRoles []string
+			c.OnHTML(".mouseKeyboard-view .Profile-playerSummary--role img", func(e *colly.HTMLElement) {
 				src := e.Attr("src")
-				roles = append(roles, url.RoleURLS[src])
+				pcRoles = append(pcRoles, url.RoleURLS[src])
+				stats.PC.HasRanks = true
 			})
 
 			var i int
-			c.OnHTML(".Profile-playerSummary--rank", func(e *colly.HTMLElement) {
-				if len(roles) == 0 {
+			c.OnHTML(".mouseKeyboard-view .Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+				if len(pcRoles) == 0 {
 					return
 				}
-				role := roles[i]
+				role := pcRoles[i]
 				imgPath := path.Base(e.Attr("src"))
 
 				rank, roleError := ranks.GetRoleRank(imgPath)
@@ -64,15 +65,49 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 
 				switch role {
 				case "tank":
-					stats.Ranks.Tank = rank
+					stats.PC.Ranks.Tank = rank
 				case "dps":
-					stats.Ranks.DPS = rank
+					stats.PC.Ranks.DPS = rank
 				case "support":
-					stats.Ranks.Support = rank
+					stats.PC.Ranks.Support = rank
 				}
 
 				i++
 			})
+
+			var consoleRoles []string
+			c.OnHTML(".Profile-playerSummary--role", func(e *colly.HTMLElement) {
+				src := e.ChildAttr("use", "href")
+				consoleRoles = append(consoleRoles, url.RoleURLS[src])
+				stats.Console.HasRanks = true
+			})
+
+			var j int
+			c.OnHTML(".controller-view .Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+				if len(consoleRoles) == 0 {
+					return
+				}
+				role := consoleRoles[j]
+				imgPath := path.Base(e.Attr("src"))
+
+				rank, roleError := ranks.GetRoleRank(imgPath)
+				if roleError != nil {
+					err = roleError
+					return
+				}
+
+				switch role {
+				case "tank":
+					stats.Console.Ranks.Tank = rank
+				case "dps":
+					stats.Console.Ranks.DPS = rank
+				case "support":
+					stats.Console.Ranks.Support = rank
+				}
+
+				j++
+			})
+
 		}
 	}
 
