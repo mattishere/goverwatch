@@ -78,8 +78,10 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 			var consoleRoles []string
 			c.OnHTML(".Profile-playerSummary--role", func(e *colly.HTMLElement) {
 				src := e.ChildAttr("use", "href")
-				consoleRoles = append(consoleRoles, url.RoleURLS[src])
-				stats.Console.HasRanks = true
+				if src != "" {
+					consoleRoles = append(consoleRoles, url.RoleURLS[src])
+					stats.Console.HasRanks = true
+				}
 			})
 
 			var j int
