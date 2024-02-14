@@ -26,14 +26,16 @@ type Platform struct {
 
 // Ranks contains the ranks of the player
 type Ranks struct {
-	Tank    Rank
-	DPS     Rank
-	Support Rank
+	Tank      Rank
+	DPS       Rank
+	Support   Rank
+	OpenQueue Rank
 }
 
 // Rank contains the rank data of the player
 type Rank struct {
-	Rank     string
-	Division int
-	Icon     string
+	Rank         string
+	Icon         string
+	Division     int
+	DivisionIcon string
 }

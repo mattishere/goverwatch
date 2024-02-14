@@ -1,8 +1,6 @@
 package goverwatch
 
 import (
-	"path"
-
 	"github.com/gocolly/colly"
 	"github.com/mattishere/goverwatch/data"
 	"github.com/mattishere/goverwatch/ranks"
@@ -50,69 +48,106 @@ func GetStats(name string, discriminator int) (stats data.Stats, err error) {
 			})
 
 			var i int
-			c.OnHTML(".mouseKeyboard-view .Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+			c.OnHTML(".mouseKeyboard-view .Profile-playerSummary--rankImageWrapper", func(e *colly.HTMLElement) {
 				if len(pcRoles) == 0 {
 					return
 				}
-				role := pcRoles[i]
-				imgPath := path.Base(e.Attr("src"))
 
-				rank, roleError := ranks.GetRoleRank(imgPath)
-				if roleError != nil {
-					err = roleError
-					return
-				}
+				var rank data.Rank
+				e.ForEach(".Profile-playerSummary--rank", func(i int, e *colly.HTMLElement) {
+					// Rank
+					if i == 0 {
 
-				switch role {
+						rankStr := ranks.GetRoleRank(e.Attr("src"))
+
+						rank.Rank = rankStr
+						rank.Icon = e.Attr("src")
+
+						return
+					}
+
+					// Division
+					division, divisionError := ranks.GetRoleDivision(e.Attr("src"))
+
+					if divisionError != nil {
+						err = divisionError
+						return
+					}
+
+					rank.Division = division
+					rank.DivisionIcon = e.Attr("src")
+				})
+
+				switch pcRoles[i] {
 				case "tank":
 					stats.PC.Ranks.Tank = rank
 				case "dps":
 					stats.PC.Ranks.DPS = rank
 				case "support":
 					stats.PC.Ranks.Support = rank
+				case "open":
+					stats.PC.Ranks.OpenQueue = rank
 				}
 
 				i++
 			})
 
 			var consoleRoles []string
-			c.OnHTML(".Profile-playerSummary--role", func(e *colly.HTMLElement) {
-				src := e.ChildAttr("use", "href")
-				if src != "" {
-					consoleRoles = append(consoleRoles, url.RoleURLS[src])
-					stats.Console.HasRanks = true
-				}
+			c.OnHTML(".controller-view .Profile-playerSummary--role img", func(e *colly.HTMLElement) {
+				src := e.Attr("src")
+				consoleRoles = append(consoleRoles, url.RoleURLS[src])
+				stats.Console.HasRanks = true
 			})
 
 			var j int
-			c.OnHTML(".controller-view .Profile-playerSummary--rank", func(e *colly.HTMLElement) {
+			c.OnHTML(".controller-view .Profile-playerSummary--rankImageWrapper", func(e *colly.HTMLElement) {
 				if len(consoleRoles) == 0 {
 					return
 				}
-				role := consoleRoles[j]
-				imgPath := path.Base(e.Attr("src"))
 
-				rank, roleError := ranks.GetRoleRank(imgPath)
-				if roleError != nil {
-					err = roleError
-					return
-				}
+				var rank data.Rank
+				e.ForEach(".Profile-playerSummary--rank", func(i int, e *colly.HTMLElement) {
+					// Rank
+					if i == 0 {
 
-				switch role {
+						rankStr := ranks.GetRoleRank(e.Attr("src"))
+
+						rank.Rank = rankStr
+						rank.Icon = e.Attr("src")
+
+						return
+					}
+
+					// Division
+					division, divisionError := ranks.GetRoleDivision(e.Attr("src"))
+
+					if divisionError != nil {
+						err = divisionError
+						return
+					}
+
+					rank.Division = division
+					rank.DivisionIcon = e.Attr("src")
+				})
+
+				switch consoleRoles[j] {
 				case "tank":
 					stats.Console.Ranks.Tank = rank
 				case "dps":
 					stats.Console.Ranks.DPS = rank
 				case "support":
 					stats.Console.Ranks.Support = rank
+				case "open":
+					stats.Console.Ranks.OpenQueue = rank
 				}
 
 				j++
 			})
-
 		}
+
+		c.Visit(link)
+		return stats, err
 	}
 
-	c.Visit(link)
-	return stats, err
+	return stats, nil
 }
